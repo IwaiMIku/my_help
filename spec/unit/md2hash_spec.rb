@@ -1,44 +1,72 @@
-module MyHelp
-  RSpec.describe Md2Hash do
-    context "options" do
-      it "accept options" do
-        debug = Md2Hash.new("", debug: true).opts[:debug]
-        expect(debug).to be_truthy
-      end
-      it "accept without options" do
-        Md2Hash.new("")
-      end
+RSpec.describe "md2hash" do
+  context "options" do
+    it "accept options" do
+      debug = Md2hash.new("", debug: true).opts[:debug]
+      expect(debug).to be_truthy
     end
-    context "fsm" do
-      before {
-        @md_text = <<HEREDOC
+    it "accept without options" do
+      Md2hash.new("")
+    end
+  end
+  context "fsm" do
+    before {
+      @md_text = <<HEREDOC
 # head1
-    - hage
+  - hage
 # head2
-    - hage
-    - hoge
+  - hage
+  - hoge
 HEREDOC
-        @Md2Hash = Md2Hash.new(@md_text)
+      @md2hash = Md2hash.new(@md_text)
+    }
+    it "reads text" do
+      actual = @md2hash.md_text
+      expected = @md_text.split("\n")
+      # expected = ["# head1", "  - hage",
+      #             "# head2", "  - hage", "  - hoge"]
+      expect(actual).to eq(expected)
+    end
+    it "has contents of Hash" do
+      contents = @md2hash.contents
+      expect(contents).to be_a(Hash)
+    end
+    it "outputs a correct hash" do
+      results = @md2hash.results
+      contents = @md2hash.contents
+      expected = {
+        "head1" => ["  - hage"],
+        "head2" => ["  - hage", "  - hoge"],
       }
-      it "reads text" do
-        actual = @Md2Hash.md_text
-        expected = @md_text.split("\n")
-        # expected = ["#+STARTUP: indent nolineimages overview",
-        #             "# head1", "  - hage",
-        #             "# head2", "  - hage", "  - hoge"]
-        expect(actual).to eq(expected)
-      end
-      it "has contents of Hash" do
-        contents = @Md2Hash.contents
-        expect(contents).to be_a(Hash)
-      end
-      it "outputs a correct hash" do
-        results = @Md2Hash.results
-        contents = @Md2Hash.contents
-        expected = { "head1" => ["    - hage"],
-                     "head2" => ["    - hage", "    - hoge"] }
-        expect(contents).to eq(expected)
-      end
+=begin
+      expected = {
+        "head1" => {
+          "head1-2" => ["   - hage"],
+        },
+        "head2" => ["  - hage", "  - hoge"],
+      }
+=end
+      expect(contents).to eq(expected)
+    end
+  end
+  context "hierarchy hash" do
+    before {
+      @md_text = <<HEREDOC
+# head1
+## head1-2
+  - hage
+HEREDOC
+      @md2hash = Md2hash.new(@md_text)
+    }
+    it "reads text" do
+      results = @md2hash.results
+      contents = @md2hash.contents
+      # expected = @md_text.split("\n")
+      expected = {
+        "head1" => {
+          "head1-2" => ["   - hage"],
+        },
+      }
+      expect(contents).to eq(expected)
     end
   end
 end
